@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+  <title>Classroom Pen Fight 3D - The Nostalgic School Game</title>
+  <link rel="stylesheet" href="./src/style.css">
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🖊️</text></svg>">
+</head>
+<body>
+  <!-- 3D WebGL Canvas Container -->
+  <div id="canvas-container"></div>
+
+  <!-- HUD Overlay -->
+  <div id="ui-overlay">
+    <!-- Top Bar: Classroom Chalkboard Scoreboard -->
+    <div class="top-bar interactive">
+      <div class="chalkboard-header">
+        <div class="score-player p1">
+          <span class="player-name" id="p1-title">Player 1</span>
+          <span class="player-pen-label" id="p1-pen-name">Reynolds 045</span>
+          <div class="score-tally" id="p1-score">0</div>
+        </div>
+
+        <div class="round-info">
+          <div class="round-pill" id="round-label">ROUND 1 / 3</div>
+          <div class="score-divider">VS</div>
+        </div>
+
+        <div class="score-player p2">
+          <span class="player-name" id="p2-title">Benchmate (AI)</span>
+          <span class="player-pen-label" id="p2-pen-name">Cello Gripper</span>
+          <div class="score-tally" id="p2-score">0</div>
+        </div>
+      </div>
+
+      <!-- Quick Action Buttons -->
+      <div class="header-actions">
+        <button id="btn-camera" class="btn-icon" title="Toggle Camera View (Top-Down / 3D)">🎥</button>
+        <button id="btn-sound" class="btn-icon" title="Toggle Sound">🔊</button>
+        <button id="btn-pens" class="btn-icon" title="Select Pens">🖊️</button>
+        <button id="btn-settings" class="btn-icon" title="Game Settings & Mode">⚙️</button>
+        <button id="btn-reset" class="btn-icon" title="Restart Match">🔄</button>
+      </div>
+    </div>
+
+    <!-- Turn Banner -->
+    <div id="turn-banner">
+      <div id="turn-dot"></div>
+      <div id="turn-text">Player 1: Pull back pen to aim & flick!</div>
+    </div>
+
+    <!-- Power & Spin Drag Gauge HUD -->
+    <div id="power-gauge">
+      <div id="power-label">POWER: 0%</div>
+      <div class="power-bar-wrapper">
+        <div id="power-bar-fill"></div>
+      </div>
+      <div id="spin-label" style="font-size: 11px; opacity: 0.85; font-family: 'JetBrains Mono', monospace;">SPIN: CENTER</div>
+    </div>
+
+    <!-- Bottom Controls & Hints -->
+    <div class="bottom-bar">
+      <div class="controls-hint">
+        <span><span class="key-badge">DRAG</span> Pull back on pen to aim</span>
+        <span>•</span>
+        <span><span class="key-badge">OFF-CENTER</span> Drag tip or cap for spin</span>
+        <span>•</span>
+        <span><span class="key-badge">RELEASE</span> Launch flick!</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Announcement Banner (Round Win / Knockout) -->
+  <div id="announcement-banner">
+    <div id="announce-title">KNOCKOUT!</div>
+    <div id="announce-sub">Player 1 knocked the opponent off the desk!</div>
+    <button id="btn-next-round" class="btn-primary interactive" style="margin-top: 18px;">NEXT ROUND</button>
+  </div>
+
+  <!-- Pen Selection Modal -->
+  <div id="pen-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title">Select Your Weapons</h2>
+        <button id="btn-close-pen-modal" class="btn-icon interactive" style="width: 32px; height: 32px; font-size: 14px;">✕</button>
+      </div>
+
+      <div style="display: flex; gap: 12px; margin-bottom: 6px;">
+        <button id="tab-p1-pens" class="btn-primary interactive" style="padding: 6px 16px; font-size: 13px;">Player 1 Pen</button>
+        <button id="tab-p2-pens" class="btn-primary interactive" style="padding: 6px 16px; font-size: 13px; background: #334155;">Player 2 / AI Pen</button>
+      </div>
+
+      <div class="pen-grid" id="pen-grid-container">
+        <!-- Dynamically populated pen cards -->
+      </div>
+
+      <button id="btn-confirm-pens" class="btn-primary interactive">CONFIRM & PLAY</button>
+    </div>
+  </div>
+
+  <!-- Settings / Game Mode Modal -->
+  <div id="settings-modal" class="modal-overlay">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h2 class="modal-title">Game Options & Mode</h2>
+        <button id="btn-close-settings-modal" class="btn-icon interactive" style="width: 32px; height: 32px; font-size: 14px;">✕</button>
+      </div>
+
+      <div class="settings-group">
+        <div class="setting-row">
+          <span class="setting-label">Game Mode:</span>
+          <select id="select-mode" class="game-select interactive">
+            <option value="pve">1 Player vs AI</option>
+            <option value="pvp">2 Players (Pass & Play)</option>
+          </select>
+        </div>
+
+        <div class="setting-row" id="row-ai-difficulty">
+          <span class="setting-label">AI Difficulty:</span>
+          <select id="select-difficulty" class="game-select interactive">
+            <option value="rookie">Classroom Rookie (Easy)</option>
+            <option value="benchmate" selected>Benchmate (Medium)</option>
+            <option value="backbencher">Backbencher Pro (Hard/Lethal)</option>
+          </select>
+        </div>
+
+        <div class="setting-row">
+          <span class="setting-label">Match Format:</span>
+          <select id="select-rounds" class="game-select interactive">
+            <option value="3" selected>Best of 3 Rounds</option>
+            <option value="5">Best of 5 Rounds</option>
+            <option value="1">Sudden Death (1 Round)</option>
+          </select>
+        </div>
+      </div>
+
+      <button id="btn-save-settings" class="btn-primary interactive">APPLY & RESTART MATCH</button>
+    </div>
+  </div>
+
+  <!-- Application Main Logic -->
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>
